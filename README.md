@@ -3,6 +3,9 @@
 
 - [Overview](#overview)
 - [API](#api)
+  - [`POST /pointers/:name`](#post-pointersname)
+  - [`GET /pointers/:name`](#get-pointersname)
+  - [`GET /:name`](#get-name)
 - [TODOs](#todos)
 
 ## Overview
