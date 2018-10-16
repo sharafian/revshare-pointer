@@ -22,9 +22,21 @@ const app = new Koa()
 router.post('/pointers/:name', async ctx => {
   const { payout } = ctx.request.body
 
-  if (/[A-Za-z0-9\-_]/.test(ctx.params.name)) {
+  if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
     ctx.throw(400, 'invalid :name. must only use base64url characters.')
     return
+  }
+
+  try {
+    const pointer = await db.get('pointer:' + ctx.params.name)
+    if (pointer) {
+      ctx.throw(400, 'entry already exists')
+      return
+    }
+  } catch (e) {
+    if (e.type !== 'NotFoundError') {
+      throw e
+    }
   }
 
   let sum = 0
@@ -70,13 +82,16 @@ router.get('/pointers/:name', async ctx => {
 router.get('/:name', async ctx => {
   if (ctx.get('accept').includes('application/spsp4+json')) {
     try {
-      const pointer = await db.get('pointer:' + tag)
+      const pointer = await db.get('pointer:' + ctx.params.name)
       if (pointer) {
         const details = stream.generateAddressAndSecret(ctx.params.name)
         ctx.body = {
           destination_account: details.destinationAccount,
           shared_secret: details.sharedSecret
         }
+        ctx.set('Content-Type', 'application/spsp4+json')
+        ctx.set('Access-Control-Allow-Origin', '*')
+        ctx.set('Access-Control-Allow-Headers', 'Content-Type')
       }
     } catch (e) {
       debug('failed to lookup pointer. error=' + e.message)
@@ -109,7 +124,7 @@ async function run () {
     conn.on('stream', stream => {
       stream.setReceiveMax('999999999999')
       stream.on('money', amount => {
-        Promise.all(pointer.payout.forEach(entity => {
+        Promise.all(pointer.payout.map(entity => {
           const payout = Math.floor(Number(amount) * (entity.percent / 100))
 
           if (!payout) {
