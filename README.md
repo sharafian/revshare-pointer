@@ -15,8 +15,8 @@ you create a revshare payment pointer.
 
 ## TODOs
 
-- [ ] Implement revshare pointer creation API
-- [ ] revshare stream payment forwarding
+- [x] Implement revshare pointer creation API
+- [x] revshare stream payment forwarding
 - [ ] web GUI to create revshare pointers
 - [ ] instructions on how to run your own revshare pointer server
 - [ ] authentication to modify/delete revshare pointers
