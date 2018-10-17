@@ -42,13 +42,19 @@ router.post('/pointers/:name', async ctx => {
   let sum = 0
   for (const entity of payout) {
     if (typeof entity.percent !== 'number' || isNaN(entity.percent)) {
-      ctx.throw(400, 'invalid percent. must be positive number')
+      ctx.throw(400, 'invalid percent. must be number.')
+      return
+    }
+
+    if (entity.percent <= 0) {
+      ctx.throw(400, 'invalid percent. must be positive.')
     }
 
     sum += entity.percent
 
     if (!entity.pointer || typeof entity.pointer !== 'string') {
       ctx.throw(400, 'invalid pointer. must be string.')
+      return
     }
   }
 
@@ -124,10 +130,12 @@ async function run () {
     conn.on('stream', stream => {
       stream.setReceiveMax('999999999999')
       stream.on('money', amount => {
+        let spent = 0
         Promise.all(pointer.payout.map(entity => {
           const payout = Math.floor(Number(amount) * (entity.percent / 100))
+          spent += payout
 
-          if (!payout) {
+          if (payout <= 0 || spent > Number(amount)) {
             return Promise.resolve()
           }
 
