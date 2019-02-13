@@ -93,7 +93,7 @@ router.get('/:name', async ctx => {
         const details = stream.generateAddressAndSecret(ctx.params.name)
         ctx.body = {
           destination_account: details.destinationAccount,
-          shared_secret: details.sharedSecret
+          shared_secret: details.sharedSecret.toString('base64')
         }
         ctx.set('Content-Type', 'application/spsp4+json')
         ctx.set('Access-Control-Allow-Origin', '*')
