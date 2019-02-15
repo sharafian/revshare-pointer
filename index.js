@@ -12,6 +12,12 @@ const stream = new IlpStream.Server({
   serverSecret: crypto.randomBytes(32)
 })
 
+const koaJwt = require('koa-jwt')
+const jsonwebtoken = require('jsonwebtoken')
+const jwt = koaJwt({
+  secret: 'secret'
+})
+
 const debug = require('debug')('revshare-pointer')
 const Koa = require('koa')
 const router = require('koa-router')()
@@ -19,7 +25,7 @@ const parser = require('koa-bodyparser')()
 const app = new Koa()
 
 // Create revshare pointer
-router.post('/pointers/:name', async ctx => {
+router.post('/pointers/:name', jwt, async ctx => {
   const { payout } = ctx.request.body
 
   if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
@@ -105,6 +111,18 @@ router.get('/:name', async ctx => {
   }
 })
 
+// Login
+router.post('/login', async ctx => {
+  const password = ctx.request.body.password
+  if (password !== 'password') {
+    ctx.throw(401, 'authentication failed')
+    return
+  }
+  ctx.body = {
+    token: jsonwebtoken.sign({},'secret', { expiresIn: '1h' })
+  }
+})
+
 async function run () {
   await stream.listen()
 
@@ -143,7 +161,7 @@ async function run () {
         })).then(() => {
           debug(`paid out. amount=${amount} name=${tag}`)
         }).catch(e => {
-          debug('failed to pay. error=', e) 
+          debug('failed to pay. error=', e)
         })
       })
     })
