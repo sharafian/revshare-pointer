@@ -41,7 +41,7 @@ const auth = {
     debug(`created access token=${accessToken}`)
     ctx.body = accessToken
 
-    next()
+    return next()
   },
 
   authorize: async function (ctx, next) {
@@ -78,7 +78,7 @@ const auth = {
       return
     }
 
-    next()
+    return next()
   }
 }
 
