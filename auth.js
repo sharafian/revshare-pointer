@@ -4,6 +4,11 @@ const jwt = require('./jwt')
 
 const auth = {
   authenticate: async function (ctx, next) {
+    if (!ctx.get('authorization')) {
+      ctx.throw(401, 'authentication failed. must provide authorization header')
+      return
+    }
+
     const authHeader = ctx.get('authorization').split(' ')
     const type = authHeader[0]
     const token = authHeader[1]
@@ -45,6 +50,11 @@ const auth = {
   },
 
   authorize: async function (ctx, next) {
+    if (!ctx.get('authorization')) {
+      ctx.throw(403, 'authorization failed. must provide authorization header')
+      return
+    }
+
     const authHeader = ctx.get('authorization').split(' ')
     const type = authHeader[0]
     const token = authHeader[1]

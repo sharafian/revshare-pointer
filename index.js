@@ -22,7 +22,7 @@ const parser = require('koa-bodyparser')()
 const app = new Koa()
 
 // Login
-router.post('/login', auth.authenticate, async ctx => {
+router.get('/login', auth.authenticate, async ctx => {
 })
 
 // Create revshare pointer
