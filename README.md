@@ -3,7 +3,10 @@
 
 - [Overview](#overview)
 - [API](#api)
+  - [`GET /login`](#post-pointersname)
   - [`POST /pointers/:name`](#post-pointersname)
+  - [`PUT /pointers/:name`](#post-pointersname)
+  - [`DELETE /pointers/:name`](#post-pointersname)
   - [`GET /pointers/:name`](#get-pointersname)
   - [`GET /:name`](#get-name)
 - [TODOs](#todos)
@@ -25,7 +28,7 @@ Authentication for access to protected endpoints. Must send a request with a req
 
 ```json
 {
-  "accessToken":"eyJhbGciOi..."
+  "accessToken": "eyJhbGciOi..."
 }
 ```
 
