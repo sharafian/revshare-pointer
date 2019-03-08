@@ -1,6 +1,8 @@
+const config = require('./config')
+
 const levelup = require('levelup')
 const leveldown = require('leveldown')
-const db = levelup(leveldown(process.env.DB || './revshare-pointer-db'))
+const db = levelup(leveldown(config.dbPath))
 
 const { Payer } = require('web-monetization-receiver')
 const payer = new Payer()
@@ -12,14 +14,21 @@ const stream = new IlpStream.Server({
   serverSecret: crypto.randomBytes(32)
 })
 
+const dotenv = require('dotenv').load()
+const auth = require('./auth')
+
 const debug = require('debug')('revshare-pointer')
 const Koa = require('koa')
 const router = require('koa-router')()
 const parser = require('koa-bodyparser')()
 const app = new Koa()
 
+// Login
+router.get('/login', auth.authenticate, async ctx => {
+})
+
 // Create revshare pointer
-router.post('/pointers/:name', async ctx => {
+router.post('/pointers/:name', auth.authorize, async ctx => {
   const { payout } = ctx.request.body
 
   if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
@@ -75,7 +84,7 @@ router.post('/pointers/:name', async ctx => {
 })
 
 // Get details of revshare pointer
-router.get('/pointers/:name', async ctx => {
+router.get('/pointers/:name', auth.authorize, async ctx => {
   try {
     const pointerJSON = await db.get('pointer:' + ctx.params.name)
     ctx.body = JSON.parse(pointerJSON)
@@ -112,7 +121,7 @@ async function run () {
     .use(parser)
     .use(router.routes())
     .use(router.allowedMethods())
-    .listen(process.env.PORT || 8080)
+    .listen(config.port)
 
   stream.on('connection', async conn => {
     const tag = conn.connectionTag
@@ -143,7 +152,7 @@ async function run () {
         })).then(() => {
           debug(`paid out. amount=${amount} name=${tag}`)
         }).catch(e => {
-          debug('failed to pay. error=', e) 
+          debug('failed to pay. error=', e)
         })
       })
     })
