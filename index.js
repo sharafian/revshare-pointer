@@ -1,6 +1,8 @@
+const config = require('./config')
+
 const levelup = require('levelup')
 const leveldown = require('leveldown')
-const db = levelup(leveldown(process.env.DB || './revshare-pointer-db'))
+const db = levelup(leveldown(config.dbPath))
 
 const { Payer } = require('web-monetization-receiver')
 const payer = new Payer()
@@ -119,7 +121,7 @@ async function run () {
     .use(parser)
     .use(router.routes())
     .use(router.allowedMethods())
-    .listen(process.env.PORT || 8080)
+    .listen(config.port)
 
   stream.on('connection', async conn => {
     const tag = conn.connectionTag

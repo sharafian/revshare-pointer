@@ -19,9 +19,19 @@ you create a revshare payment pointer.
 
 ## API
 
+### `GET /login`
+
+Authentication for access to protected endpoints. Must send a request with a request token in the authorization header in the format `Bearer <token>`.
+
+```json
+{
+  "accessToken":"eyJhbGciOi..."
+}
+```
+
 ### `POST /pointers/:name`
 
-Creates a revshare pointer with name `:name`. Allowed characters for the name are the base64url character set (`[A-Za-z0-9\-_]`).
+Creates a revshare pointer with name `:name`. Allowed characters for the name are the base64url character set (`[A-Za-z0-9\-_]`). This is a protected endpoint, so must provide an access token in the authorization header in the format `Bearer <token>`.
 
 The body of this request should be a JSON object containing a `payout` field.
 This `payout` field describes how payments to this pointer will be broken up.
@@ -68,10 +78,52 @@ request will return `400`.
     ]
 }
 ```
+### `PUT /pointers/:name`
+
+Updates an existing payment pointer `:name`.  Allowed characters for the name are the base64url character set (`[A-Za-z0-9\-_]`). This is a protected endpoint, so must provide an access token in the authorization header in the format `Bearer <token>`.
+
+#### Request
+
+```json
+{
+    "payout": [
+        {
+            "percent": 80,
+            "pointer": "$twitter.xrptipbot.com/sharafian_"
+        },
+        {
+            "percent": 20,
+            "pointer": "$twitter.xrptipbot.com/Interledger"
+        }
+    ]
+}
+```
+
+#### Response
+
+```json
+{
+    "name": "name",
+    "payout": [
+        {
+            "percent": 80,
+            "pointer": "$twitter.xrptipbot.com/sharafian_"
+        },
+        {
+            "percent": 20,
+            "pointer": "$twitter.xrptipbot.com/Interledger"
+        }
+    ]
+}
+```
+
+### `DELETE /pointers/:name`
+
+Deletes an existing payment pointer `:name`. A payment pointer must have been created for `:name`. This is a protected endpoint, so must provide an access token in the authorization header in the format `Bearer <token>`.
 
 ### `GET /pointers/:name`
 
-Gets the details of payment pointer `:name`.
+Gets the details of payment pointer `:name`. This is a protected endpoint, so must provide an access token in the authorization header in the format `Bearer <token>`.
 
 ```json
 {
@@ -106,10 +158,22 @@ created for `:name`.
 }
 ```
 
+## Environment Variables
+
+| Name | Default | Description |
+|:---|:---|:---|
+| `REVSHARE_PORT` | `8080` | Port to listen on locally. |
+| `REVSHARE_DB_PATH` | `./revshare-pointer-db` | Path for leveldb database. Uses in-memory database if unspecified. |
+| `REVSHARE_REQUEST_TOKEN` | `test` | Request token used for authentication to login and obtain an access token. |
+| `REVSHARE_JWT_SECRET` | `test` | Secret used for access token generation and verification. |
+| `REVSHARE_JWT_ISS` | `test` | Issuer claim identifying the server that issued the JWT. |
+| `REVSHARE_JWT_AUD` | `test` | Audience claim identifying the server that the JWT is intended for. |
+| `REVSHARE_JWT_EXP` | `10m` | Expiration claim identifying the time on or after which the JWT should not be accepted for processing. |
+
 ## TODOs
 
-- [x] Implement revshare pointer creation API
+- [x] implement revshare pointer creation API
 - [x] revshare stream payment forwarding
 - [ ] web GUI to create revshare pointers
 - [ ] instructions on how to run your own revshare pointer server
-- [ ] authentication to modify/delete revshare pointers
+- [x] authentication to modify/delete revshare pointers
