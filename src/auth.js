@@ -73,18 +73,6 @@ const auth = {
       return
     }
 
-    const decodedToken = jwt.decodeToken(token)
-
-    if (!decodedToken) {
-      ctx.throw(403, 'authorization failed. invalid token')
-      return
-    }
-
-    if (decodedToken.header.alg !== 'HS256') {
-      ctx.throw(403, 'authorization failed')
-      return
-    }
-
     const verifiedToken = await jwt.verifyToken(token)
 
     if (!verifiedToken) {
