@@ -48,7 +48,7 @@ const auth = {
 
     const accessToken = jwt.createToken(payload, options)
     debug(`created access token=${accessToken}`)
-    ctx.body = accessToken
+    ctx.body = { token: accessToken }
 
     return next()
   },
