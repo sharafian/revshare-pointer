@@ -13,7 +13,7 @@ const stream = new IlpStream.Server({
 })
 
 const dotenv = require('dotenv').load()
-const auth = require('./auth')
+const auth = require('./src/auth')
 
 const debug = require('debug')('revshare-pointer')
 const Koa = require('koa')

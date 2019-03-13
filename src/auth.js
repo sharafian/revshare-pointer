@@ -1,6 +1,7 @@
 const config = require('./config')
 const debug = require('debug')('revshare-pointer:auth')
 const jwt = require('./jwt')
+const crypto = require('crypto')
 
 const auth = {
   authenticate: async function (ctx, next) {
@@ -27,7 +28,10 @@ const auth = {
       'token=' + config.token,
       'eq=' + (token === config.token))
 
-    if(token !== config.token) {
+    const gotToken = Buffer.from(token, 'utf8')
+    const wantToken = Buffer.from(config.token, 'utf8')
+
+    if (gotToken.length !== wantToken.length || !crypto.timingSafeEqual(gotToken, wantToken)) {
       ctx.throw(401, 'authentication failed. invalid token')
       return
     }
