@@ -13,7 +13,7 @@ const jwt = {
       iss: config.jwtIssuer,
       aud: config.jwtAudience,
     }
-    options = addAlgorithm(options)
+    addAlgorithm(options)
 
     try {
       return jsonwebtoken.verify(token, config.jwtSecret, options)
