@@ -25,10 +25,45 @@ const app = new Koa()
 router.post('/login', auth.authenticate, async ctx => {
 })
 
-// Create revshare pointer
-router.post('/pointers/:name', auth.authorize, async ctx => {
+async function setPointerDetails (ctx) {
   const { payout } = ctx.request.body
 
+  let sum = 0
+  for (const entity of payout) {
+    if (typeof entity.percent !== 'number' || isNaN(entity.percent)) {
+      ctx.throw(400, 'invalid percent. must be number.')
+      return
+    }
+
+    if (entity.percent <= 0) {
+      ctx.throw(400, 'invalid percent. must be positive.')
+    }
+
+    sum += entity.percent
+
+    if (!entity.pointer || typeof entity.pointer !== 'string') {
+      ctx.throw(400, 'invalid pointer. must be string.')
+      return
+    }
+  }
+
+  if (sum !== 100) {
+    ctx.throw(400, 'invalid payout. must percents must sum to 100')
+    return
+  }
+
+  const pointer = {
+    name: ctx.params.name,
+    payout: ctx.request.body.payout
+  }
+
+  await db.put('pointer:' + ctx.params.name, JSON.stringify(pointer))
+
+  return pointer
+}
+
+// Create revshare pointer
+router.post('/pointers/:name', auth.authorize, async ctx => {
   if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
     ctx.throw(400, 'invalid :name. must only use base64url characters.')
     return
@@ -46,36 +81,7 @@ router.post('/pointers/:name', auth.authorize, async ctx => {
     }
   }
 
-  let sum = 0
-  for (const entity of payout) {
-    if (typeof entity.percent !== 'number' || isNaN(entity.percent)) {
-      ctx.throw(400, 'invalid percent. must be number.')
-      return
-    }
-
-    if (entity.percent <= 0) {
-      ctx.throw(400, 'invalid percent. must be positive.')
-    }
-
-    sum += entity.percent
-
-    if (!entity.pointer || typeof entity.pointer !== 'string') {
-      ctx.throw(400, 'invalid pointer. must be string.')
-      return
-    }
-  }
-
-  if (sum !== 100) {
-    ctx.throw(400, 'invalid payout. must percents must sum to 100')
-    return
-  }
-
-  const pointer = {
-    name: ctx.params.name,
-    payout: ctx.request.body.payout
-  }
-
-  await db.put('pointer:' + ctx.params.name, JSON.stringify(pointer))
+  const pointer = await setPointerDetails(ctx)
 
   debug('created pointer. name=' + ctx.params.name)
   ctx.body = pointer
@@ -83,8 +89,6 @@ router.post('/pointers/:name', auth.authorize, async ctx => {
 
 // Update revshare pointer
 router.put('/pointers/:name', auth.authorize, async ctx => {
-  const { payout } = ctx.request.body
-
   if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
     ctx.throw(400, 'invalid :name. must only use base64url characters.')
     return
@@ -97,36 +101,7 @@ router.put('/pointers/:name', auth.authorize, async ctx => {
     ctx.throw(400, 'entry does not exist')
   }
 
-  let sum = 0
-  for (const entity of payout) {
-    if (typeof entity.percent !== 'number' || isNaN(entity.percent)) {
-      ctx.throw(400, 'invalid percent. must be number.')
-      return
-    }
-
-    if (entity.percent <= 0) {
-      ctx.throw(400, 'invalid percent. must be positive.')
-    }
-
-    sum += entity.percent
-
-    if (!entity.pointer || typeof entity.pointer !== 'string') {
-      ctx.throw(400, 'invalid pointer. must be string.')
-      return
-    }
-  }
-
-  if (sum !== 100) {
-    ctx.throw(400, 'invalid payout. must percents must sum to 100')
-    return
-  }
-
-  const pointer = {
-    name: ctx.params.name,
-    payout: ctx.request.body.payout
-  }
-
-  await db.put('pointer:' + ctx.params.name, JSON.stringify(pointer))
+  const pointer = await setPointerDetails(ctx)
 
   debug('updated pointer. name=' + ctx.params.name)
   ctx.body = pointer
