@@ -148,7 +148,7 @@ router.del('/pointers/:name', auth.authorize, async ctx => {
     const pointer = await db.get('pointer:' + ctx.params.name)
     if (pointer) {
       await db.del('pointer:' + ctx.params.name)
-      ctx.body = 'deleted pointer. name=' + ctx.params.name
+      ctx.body = { deleted: true, name: ctx.params.name }
     }
   } catch (e) {
     debug('failed to delete pointer. error=' + e.message)
