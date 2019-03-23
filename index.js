@@ -12,32 +12,21 @@ const stream = new IlpStream.Server({
   serverSecret: crypto.randomBytes(32)
 })
 
+const dotenv = require('dotenv').load()
+const auth = require('./auth')
+
 const debug = require('debug')('revshare-pointer')
 const Koa = require('koa')
 const router = require('koa-router')()
 const parser = require('koa-bodyparser')()
 const app = new Koa()
 
-// Create revshare pointer
-router.post('/pointers/:name', async ctx => {
+// Login
+router.post('/login', auth.authenticate, async ctx => {
+})
+
+async function setPointerDetails (ctx) {
   const { payout } = ctx.request.body
-
-  if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
-    ctx.throw(400, 'invalid :name. must only use base64url characters.')
-    return
-  }
-
-  try {
-    const pointer = await db.get('pointer:' + ctx.params.name)
-    if (pointer) {
-      ctx.throw(400, 'entry already exists')
-      return
-    }
-  } catch (e) {
-    if (e.type !== 'NotFoundError') {
-      throw e
-    }
-  }
 
   let sum = 0
   for (const entity of payout) {
@@ -70,7 +59,51 @@ router.post('/pointers/:name', async ctx => {
 
   await db.put('pointer:' + ctx.params.name, JSON.stringify(pointer))
 
+  return pointer
+}
+
+// Create revshare pointer
+router.post('/pointers/:name', auth.authorize, async ctx => {
+  if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
+    ctx.throw(400, 'invalid :name. must only use base64url characters.')
+    return
+  }
+
+  try {
+    const pointer = await db.get('pointer:' + ctx.params.name)
+    if (pointer) {
+      ctx.throw(400, 'entry already exists')
+      return
+    }
+  } catch (e) {
+    if (e.type !== 'NotFoundError') {
+      throw e
+    }
+  }
+
+  const pointer = await setPointerDetails(ctx)
+
   debug('created pointer. name=' + ctx.params.name)
+  ctx.body = pointer
+})
+
+// Update revshare pointer
+router.put('/pointers/:name', auth.authorize, async ctx => {
+  if (/[^A-Za-z0-9\-_]/.test(ctx.params.name)) {
+    ctx.throw(400, 'invalid :name. must only use base64url characters.')
+    return
+  }
+
+  try {
+    const pointer = await db.get('pointer:' + ctx.params.name)
+  } catch (e) {
+    debug('failed to lookup pointer. error=' + e.message)
+    ctx.throw(400, 'entry does not exist')
+  }
+
+  const pointer = await setPointerDetails(ctx)
+
+  debug('updated pointer. name=' + ctx.params.name)
   ctx.body = pointer
 })
 
@@ -81,6 +114,19 @@ router.get('/pointers/:name', async ctx => {
     ctx.body = JSON.parse(pointerJSON)
   } catch (e) {
     debug('failed to lookup pointer. error=' + e.message)
+  }
+})
+
+// Delete revshare pointer
+router.del('/pointers/:name', auth.authorize, async ctx => {
+  try {
+    const pointer = await db.get('pointer:' + ctx.params.name)
+    if (pointer) {
+      await db.del('pointer:' + ctx.params.name)
+      ctx.body = { deleted: true, name: ctx.params.name }
+    }
+  } catch (e) {
+    debug('failed to delete pointer. error=' + e.message)
   }
 })
 
@@ -143,7 +189,7 @@ async function run () {
         })).then(() => {
           debug(`paid out. amount=${amount} name=${tag}`)
         }).catch(e => {
-          debug('failed to pay. error=', e) 
+          debug('failed to pay. error=', e)
         })
       })
     })

@@ -18,8 +18,10 @@
   "homepage": "https://github.com/sharafian/revshare-pointer#readme",
   "dependencies": {
     "debug": "^4.1.0",
+    "dotenv": "^6.2.0",
     "ilp-plugin": "^3.2.1",
     "ilp-protocol-stream": "^1.8.4",
+    "jsonwebtoken": "^8.5.0",
     "koa": "^2.5.3",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
