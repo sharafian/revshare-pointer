@@ -108,7 +108,7 @@ router.put('/pointers/:name', auth.authorize, async ctx => {
 })
 
 // Get details of revshare pointer
-router.get('/pointers/:name', auth.authorize, async ctx => {
+router.get('/pointers/:name', async ctx => {
   try {
     const pointerJSON = await db.get('pointer:' + ctx.params.name)
     ctx.body = JSON.parse(pointerJSON)
