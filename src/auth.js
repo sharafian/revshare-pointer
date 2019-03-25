@@ -24,14 +24,11 @@ const auth = {
       return
     }
 
-    debug('checking auth token. given=' + token,
-      'token=' + config.token,
-      'eq=' + (token === config.token))
-
     const gotToken = Buffer.from(token, 'utf8')
     const wantToken = Buffer.from(config.token, 'utf8')
 
     if (gotToken.length !== wantToken.length || !crypto.timingSafeEqual(gotToken, wantToken)) {
+      debug('received token "%s", but expected "%s"', gotToken.toString(), wantToken.toString())
       ctx.throw(401, 'authentication failed. invalid token')
       return
     }
